@@ -2,9 +2,9 @@ class Hangman
   @@word_list;
   @@guess_counter = 5;
   @@secret_word;
+  @@full_secret_word= [];
   @@correct_letters = [];
   @@incorrect_letters = [];
-  @@anwser = [];
   @@random_num;
   def initialize()
     file = File.open("5desk.txt");
@@ -30,13 +30,16 @@ class Hangman
   def createSecretWord
     length = self.generateRandomWord().length;
     self.generate3randomNum(length);
+    @@secret_word.each {
+      |char|
+      @@full_secret_word.push(char);
+    }
     @@random_num.each_with_index {
       |num, i|
-      @@anwser.push(@@secret_word[num]);
       @@secret_word[num] = '_';
     }
-    puts @@anwser.inspect;
     puts @@secret_word.inspect;
+    puts @@full_secret_word.inspect;
   end
 
   def getUserInput
