@@ -60,6 +60,7 @@ class Hangman
       inputLength = @@userInput.length;
     end while inputLength != 1 || !@@userInput.match(/[a-z]/) || self.checkChosenLetter();
     @@guess_counter = @@guess_counter - 1;
+    @@userInput = "";
     puts @@userInput;
   end
 
