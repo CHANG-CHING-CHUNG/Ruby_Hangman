@@ -5,7 +5,9 @@ class Hangman
   @@full_secret_word= [];
   @@correct_letters = [];
   @@incorrect_letters = [];
+  @@chosen_letters = [];
   @@random_num;
+  @@userInput;
   def initialize()
     file = File.open("5desk.txt");
     newfile = file.readlines.map(&:chomp);
@@ -38,26 +40,66 @@ class Hangman
       |num, i|
       @@secret_word[num] = '_';
     }
-    puts @@secret_word.inspect;
-    puts @@full_secret_word.inspect;
+    puts 'Secret',@@secret_word.inspect;
+    puts 'Full word', @@full_secret_word.inspect;
   end
 
   def getUserInput
     puts "Guess a letter"
     inputLength = 0;
-    userInput = 'a';
+    @@userInput = 'a';
     begin
-      if inputLength > 1 || !userInput.match(/[a-z]/)
+      if inputLength > 1 || !@@userInput.match(/[a-z]/)
         puts "One letter at a time!";
         puts "Please enter your letter again.";
+      elsif self.checkChosenLetter()
+        puts "The #{@@userInput} has been chosen before";
+        puts "Please choose other letters";
       end
-      userInput = gets.chomp.downcase;
-      inputLength = userInput.length;
-    end while inputLength != 1 || !userInput.match(/[a-z]/);
-    puts userInput;
+      @@userInput = gets.chomp.downcase;
+      inputLength = @@userInput.length;
+    end while inputLength != 1 || !@@userInput.match(/[a-z]/) || self.checkChosenLetter();
+    @@guess_counter = @@guess_counter - 1;
+    puts @@userInput;
+  end
+
+  def checkUserInput
+    if @@full_secret_word.include?(@@userInput);
+      @@full_secret_word.each_with_index {
+        |char, i|
+        if @@userInput === char
+          @@secret_word[i] = @@userInput;
+        end
+      }
+      @@correct_letters.push(@@userInput);
+      @@chosen_letters.push(@@userInput);
+    else
+      @@incorrect_letters.push(@@userInput);
+      @@chosen_letters.push(@@userInput);
+    end
+  end
+
+  def displayStas
+    puts 'Correct',@@correct_letters.inspect;
+    puts 'Incorrect',@@incorrect_letters.inspect;
+    puts 'Chosen',@@chosen_letters.inspect;
+    puts 'Secret',@@secret_word.inspect;
+    puts 'Counter',@@guess_counter.inspect;
+  end
+
+  def checkChosenLetter
+    if @@chosen_letters.include?(@@userInput)
+      return true;
+    end
+    return false;
   end
 end
 
 a = Hangman.new;
 a.createSecretWord();
 a.getUserInput();
+a.checkUserInput();
+a.displayStas();
+a.getUserInput();
+a.checkUserInput();
+a.displayStas();
