@@ -11,6 +11,9 @@ class Hangman
   @@letter_position = [];
   @@random_num;
   @@userInput;
+  @@isLoad = false;
+  @@isAsking = false;
+  @@gameOver = false;
   def initialize()
     file = File.open("5desk.txt");
     newfile = file.readlines.map(&:chomp);
@@ -44,7 +47,6 @@ class Hangman
       @@secret_word[num] = '_';
     }
     puts 'Secret',@@secret_word.inspect;
-    puts 'Full word', @@full_secret_word.inspect;
   end
 
   def getUserInput
@@ -92,13 +94,10 @@ class Hangman
   end
 
   def displayStas
+    puts 'Secret',@@secret_word.inspect;
+    puts 'Counter',@@guess_counter.inspect;
     puts 'Correct',@@correct_letters.inspect;
     puts 'Incorrect',@@incorrect_letters.inspect;
-    puts 'Chosen',@@chosen_letters.inspect;
-    puts 'Secret',@@secret_word.inspect;
-    puts 'full_secret_word',@@full_secret_word.inspect;
-    puts 'Counter',@@guess_counter.inspect;
-    puts 'Letter Position',@@letter_position.inspect;
   end
 
   def checkChosenLetter
@@ -117,7 +116,7 @@ class Hangman
     }
   end
 
-  def checkWin
+  def checkWin()
     win = true;
     @@secret_word.each_with_index {
       |char, i|
@@ -126,17 +125,16 @@ class Hangman
       end
     }
     if @@guess_counter === 0
-      win = false;
       puts "Game Over";
       puts "Would you like to play next round? Y/N";
       begin
         case (continue = gets.chomp.downcase)
         when "y"
-          self.clearAll();
-          self.gameStart();
+          return true;
         when "n"
           puts "Good Bye!";
-          return !win;
+          @@gameOver = true;
+          return false;
         else 
           puts "Y or N only."
         end
@@ -147,11 +145,10 @@ class Hangman
       begin
         case (continue = gets.chomp.downcase)
         when "y"
-          self.clearAll();
-          self.gameStart();
+          return true;
         when "n"
           puts "Good Bye!";
-          return win;
+          return false;
         else 
           puts "Y or N only."
         end
@@ -172,40 +169,58 @@ class Hangman
     @@letter_position = [];
     @@random_num;
     @@userInput;
+    @@isLoad = false;
   end
 
   def gameStart
-    self.createSecretWord();
-    self.getLetterPosition();
+    gameOver = false
+    if !@@isAsking
+      self.askLoading()
+      @@isAsking = true;
+    end
+    if @@isLoad
+      self.loadStatusFromJSON();
+      self.displayStas();
+    else
+      self.createSecretWord();
+      self.getLetterPosition();
+    end
     begin
       if self.saveGame()
         puts "See you~!";
-        return 
+        win = true;
+        break
       end
-      self.loadStatusFromJSON(self.to_JSON);
       self.getUserInput();
       self.checkUserInput();
       self.displayStas();
-    end while !self.checkWin()
+      win = self.checkWin();
+      if win
+        self.clearAll();
+        self.gameStart();
+      end
+    end while !win && @@gameOver === false;
   end
 
   def saveGame
-    puts "If you want to save the game and quit, enter 'Y' ";
+    puts "If you want to save the game and quit, enter 'Y', else enter 'N' ";
     
     begin
       isYes = gets.chomp.downcase;
       case (isYes)
       when "y"
-        self.to_JSON();
+        self.to_JSON_file();
         return true
       when "n"
         return false;
+      else
+        puts "Y or N only.";
       end
     end while isYes != "y" || isYes != "n";
   end
 
-  def to_JSON
-    JSON.dump ({
+  def to_JSON_file
+    data = JSON.dump ({
      :guess_counter => @@guess_counter,
      :secret_word => @@secret_word,
      :full_secret_word => @@full_secret_word,
@@ -214,11 +229,37 @@ class Hangman
      :chosen_letters => @@chosen_letters,
      :letter_position => @@letter_position,
     })
+
+    newFile = File.open("save.json", "w") {
+      |f|
+      f.write(data);
+    }
   end
 
-  def loadStatusFromJSON(string)
-    gameStatus = JSON.load string
-    puts gameStatus.inspect;
+  def loadStatusFromJSON()
+    gameStatus = JSON.load File.read("save.json");
+    @@guess_counter =  gameStatus["guess_counter"];
+    @@secret_word = gameStatus["secret_word"];
+    @@full_secret_word = gameStatus["full_secret_word"];
+    @@correct_letters = gameStatus["correct_letters"];
+    @@incorrect_letters = gameStatus["incorrect_letters"];
+    @@chosen_letters = gameStatus["chosen_letters"];
+    @@letter_position = gameStatus["letter_position"];
+  end
+
+  def askLoading
+    puts "Load the game that you saved last time? Y/N";
+    begin
+      ans = gets.chomp.downcase;
+      case (ans)
+      when 'y'
+        @@isLoad = true;
+        return @@isLoad
+      when 'n'
+        @@isLoad = false;
+        return @@isLoad
+      end
+    end while ans != 'y' || ans != 'n'
   end
 end
 
