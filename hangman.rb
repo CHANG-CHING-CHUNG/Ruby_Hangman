@@ -14,6 +14,8 @@ class Hangman
   @@isLoad = false;
   @@isAsking = false;
   @@gameOver = false;
+
+  protected
   def initialize()
     file = File.open("5desk.txt");
     newfile = file.readlines.map(&:chomp);
@@ -172,6 +174,68 @@ class Hangman
     @@isLoad = false;
   end
 
+  
+  def saveGame
+    puts "If you want to save the game and quit, enter 'Y', else enter 'N' ";
+    
+    begin
+      isYes = gets.chomp.downcase;
+      case (isYes)
+      when "y"
+        self.to_JSON_file();
+        return true
+      when "n"
+        return false;
+      else
+        puts "Y or N only.";
+      end
+    end while isYes != "y" || isYes != "n";
+  end
+  
+  def to_JSON_file
+    data = JSON.dump ({
+      :guess_counter => @@guess_counter,
+      :secret_word => @@secret_word,
+      :full_secret_word => @@full_secret_word,
+      :correct_letters => @@correct_letters,
+      :incorrect_letters => @@incorrect_letters,
+      :chosen_letters => @@chosen_letters,
+      :letter_position => @@letter_position,
+    })
+    
+    newFile = File.open("save.json", "w") {
+      |f|
+      f.write(data);
+    }
+  end
+
+  def loadStatusFromJSON()
+    gameStatus = JSON.load File.read("save.json");
+    @@guess_counter =  gameStatus["guess_counter"];
+    @@secret_word = gameStatus["secret_word"];
+    @@full_secret_word = gameStatus["full_secret_word"];
+    @@correct_letters = gameStatus["correct_letters"];
+    @@incorrect_letters = gameStatus["incorrect_letters"];
+    @@chosen_letters = gameStatus["chosen_letters"];
+    @@letter_position = gameStatus["letter_position"];
+  end
+  
+  def askLoading
+    puts "Load the game that you saved last time? Y/N";
+    begin
+      ans = gets.chomp.downcase;
+      case (ans)
+      when 'y'
+        @@isLoad = true;
+        return @@isLoad
+      when 'n'
+        @@isLoad = false;
+        return @@isLoad
+      end
+    end while ans != 'y' || ans != 'n'
+  end
+
+  public
   def gameStart
     gameOver = false
     if !@@isAsking
@@ -201,67 +265,7 @@ class Hangman
       end
     end while !win && @@gameOver === false;
   end
-
-  def saveGame
-    puts "If you want to save the game and quit, enter 'Y', else enter 'N' ";
-    
-    begin
-      isYes = gets.chomp.downcase;
-      case (isYes)
-      when "y"
-        self.to_JSON_file();
-        return true
-      when "n"
-        return false;
-      else
-        puts "Y or N only.";
-      end
-    end while isYes != "y" || isYes != "n";
-  end
-
-  def to_JSON_file
-    data = JSON.dump ({
-     :guess_counter => @@guess_counter,
-     :secret_word => @@secret_word,
-     :full_secret_word => @@full_secret_word,
-     :correct_letters => @@correct_letters,
-     :incorrect_letters => @@incorrect_letters,
-     :chosen_letters => @@chosen_letters,
-     :letter_position => @@letter_position,
-    })
-
-    newFile = File.open("save.json", "w") {
-      |f|
-      f.write(data);
-    }
-  end
-
-  def loadStatusFromJSON()
-    gameStatus = JSON.load File.read("save.json");
-    @@guess_counter =  gameStatus["guess_counter"];
-    @@secret_word = gameStatus["secret_word"];
-    @@full_secret_word = gameStatus["full_secret_word"];
-    @@correct_letters = gameStatus["correct_letters"];
-    @@incorrect_letters = gameStatus["incorrect_letters"];
-    @@chosen_letters = gameStatus["chosen_letters"];
-    @@letter_position = gameStatus["letter_position"];
-  end
-
-  def askLoading
-    puts "Load the game that you saved last time? Y/N";
-    begin
-      ans = gets.chomp.downcase;
-      case (ans)
-      when 'y'
-        @@isLoad = true;
-        return @@isLoad
-      when 'n'
-        @@isLoad = false;
-        return @@isLoad
-      end
-    end while ans != 'y' || ans != 'n'
-  end
 end
 
-a = Hangman.new;
-a.gameStart();
+hangman = Hangman.new;
+hangman.gameStart();
